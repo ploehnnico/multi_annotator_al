@@ -166,3 +166,4 @@ class Mixture:
         c_idx = np.where([self.classes[i] in c for i in range(self.n_dists)])[0]
         return np.sum([self.priors[i] * self.base_dists[i].pdf(x)
                        for i in c_idx], axis=0)
+
