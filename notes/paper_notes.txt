@@ -1,0 +1,241 @@
+(1) Active Learning from Crowds (al_from_clouds): (2011)
+
+First approach for multiple annotators in AL ?
+probabilistic multi-labeler model that allows for learning
+from multiple annotators,
+- multi annotator scenario -> no oracle
+- multiple labelers w varying expertise
+- Which data sample next ? Which annotator for labeling ?
+- Prob model for learning from multiple annotators / can also learn annotator expertise
+
+Approach:
+- random variables x (data points), y (annotator labels, y_{i}^{t} for annotator t and point i, and z (true labels z_{i}
+- all z_{i} and some y_{i} are unobserved
+- Classifier, takes X and Y as training data -> estimate for Z & model of annotators expertise
+- Probabilistic graphical model over x, y and z, where annotation y depends on true label z and input x
+- model unknown distributions p(y|x,z) as gaussian or bernoulli model and p(z|x) as log regr model
+- estimate params by MLE
+- Consider binary classification
+- Which point to pick ? Use uncertainty sampling: (choose point for which prob is nearest to 1/2 in binary case)
+- Which expert to pick ? Want labeler with max confidence -> Minimize variance model of expert annotation to determine. BUT to complex  
+-> use alternative problem for optim -> lin constrained, bi-convex opt problem; Solve iwth quasi Newton
+
+Text:
+cite et al... assume x, y and z to be random distributed. Model conditional distribution as prob. graph model under the assumption,
+that annotation y depends on true label z and input x. 
+
+Experiments:
+- AL + multi labeler vs. AL + majority vote vs. random sample + multi label vs. rs + majority
+- measure accuracy + AUC
+- text data from scientific sentences with multiple annotations
+	- 10000 sentences from scientific texts
+	- each annotated vy 3 out of 8 labelers
+	- binarize into 2 classes
+- three UCI ML repository benchmark data (ionosphere, bupa and proma) with simulated multiple annotators
+	- prima(351,33); ionosphere(768,8); bupa Liver (345,7); (#samples, #features)
+	- simulate annotators -> cluster data into 5 clusters -> each annotator is expert on his cluster (labels ground truh) for other clusters 35% correct
+	
+-> AL + multi label best ...
+
+
+#########################################################################################################################################
+(2) Multi-annotator Probabilistic Active Learning (2020)
+- each instance is feature vector x
+- each x is drawn from unknown dist P(X)
+- each instance x_n belongs to true class y_n, yn is drawn from P(Y|X=x_n)
+- annotators A = {a_1,...,a_M}
+- z_n,m is annotation of annotator m for instance x_n
+- z_n = (z_n,1;z_n,2...) is vector of annotations for instance
+- Use weights w_n e [0,1]^M for annotations to represent importance of annotation | LIKE online learning w. experts ?
+
+- AL strategy consits of 3 components: annotator model, classifier & selection algorithm
+- params for annotator model and classifier are learnt on current dataset 
+- Annotator model: determin annotation performance, e.g. probability of providing correct annotation
+- Instance utility function, e.g. uncertainty sampling is used to compute utility function of instance
+- selection algorithm selects instance-annotator pairs based on instance utility and annotator performance
+
+Selection Algo MaPAL:
+- class frequency estimate classifier -> predicts class based on frequency in neighbourhood
+- Performance gain when labeling new instances is defined as reduction in classifier risk
+- 
+
+Experiments:
+- 29 data sets (https://github.com/mherde/mapal)
+- 4 data sets with real-world annotations
+- for rest simulate using three strategies
+ - (1) uniform performance; p of correct annotation depends only on annotator
+ - (2) class-dependent performance; p depends on annotator and class
+ - (3) Instance dependent performance; k-means clustering of data; p depends on cluster & annotator
+
+Compare MaPAL vs. IEThresh; IEAdjCost; Proactive; CEAL; ALIO; Random
+
+- Each experiment 100 times; 60/40 split.
+- Training set no annotations at start; train until 40% of annotations or 1000 annotations
+- Compare AUC; average over 100 runs...
+- MaPAL is best on 17 out of 25 sets
+
+
+##########################################################################################################################################
+(3) Gaussian Process Classification and Active Learning with Multiple Annotators (2014)
+
+- generalize gaussian process classification to account for multiple annotators with different expertise
+
+"
+related (...)
+- raykar et al proposse approach for jointly learning level of expertise and params of log reg, treating unobserved true labels as latent variables, outperforms majority voting
+- yan et al extend approach to explicitly model dependencies of annotators labels on instances and afterwards to AL
+- welinder et al different approach, model each anotator as multi dim classifier in feature space
+(...)
+"
+
+- Adapt gaussian process classification to be able to learn from multiple annotators
+- Instead of having a single label for each training instance use vector that contins noisy labels provided by annotators
+- Introduce latent variable z that corresponds to true class label
+- goal is to estimate posterior distribution of z
+(...) model distributions construct term estimate params...
+
+- In active learning:
+- pick instance to label next by combined term of mean and variance to combine uncertainty and distance to decision boundary
+- pick annotator that is most likely to label correctly, by ...
+
+Experiments:
+- real and simulated annotators
+- Simulated annotators...
+	- datasets from UCI repository
+	- GPC-MA vs GPC-MV(majority vote) vs GPC-CONC(all data from all annotators?) vs GPC-GOLD(GP applied to ground truth labels; as upper bound)
+	- Measures: AUC and Accuracy
+	- 70/30 split
+	- each experiment 30 times; average results
+	-> GPC-MA is best on simulated
+- Real annotators...
+	- sentimental polarity data (5000 sentences of movie reviews; sentiment pos or neg); 27747 annotions by 203 annotators; test set 5429 sentences
+	- music genre class. data (700 20s samples of songs over 10 genres), 29664 annotations by 44 annotators; test set 300
+	- Annotated on amazon mech. turk
+	- transform multi class into multiple binary tasks
+###########################################################################################################################################
+(4) ActiveLab: Active Learning with Re-Labeling by Multiple Annotators (2023)
+
+- pool based AL
+- with relabeling; estimate wether its better to relabel or label new instance
+- General/Generic approach; can be used with any classifier or multi classifier ensemble
+- estimate an acquisition score s for each instance; low s means labeling / relabeling is informative
+- procedure: estimate consensus label -> train classifier -> predict probs -> use AL method to score all examples -> assemble batch of best scoring ones and collect add. labels
+- Estimates utility of colllecting another label to further improve consensus
+- Combine prob estimates by weighted average over estimators -> select most probable class as consensus level
+- score instance x via likelihood that class y is correct under ensemble estimate
+- estimate depends on anotator weights 
+- estimate trustworthiness based on anotations to select weights
+
+Experiments:
+- Partition into Train/Test/unlabeled
+- Ground truth for test / annotations for train 
+- Evaluate accuracy against ground truth
+
+Datasets:
+- Wall Robot Navigations
+	- 4 classes =^ navigation directions
+	- predict based on sensor measurements
+	- (500/1500/1000); (train/unlabeled/test)
+	- in each round collect 100 labels from single annotator
+	- Models: Random trees/MLPs/K-nearest-neigh
+	
+- CIFAR-10H
+	- real human annotations for CIFAR-10
+	- (1000/4000/5000); (train/test/unlabeled)
+	- in each round collect 500 labels from one annotator
+	- Models: ResNet-18; ResNet-34; ResNet-50
+	
+- Wall Robot Complete
+	- similar to wall robot..
+############################################################################################################################################
+(5) Combining Crowd and Expert Labels Using Decision Theoretic Active Learning (2015)
+
+- Combine crowd worker and domain expert annotators
+- Use decision theoretic approach to decide wether to query crowd or expert in order to minimize loss
+- states s consists of: {(1) set of unlabeled items, (2) set of collected labels, (3) remaining budget}
+- start state s_0: all items except initial seed of e.g. 100 are unlabeled
+- end state is reached when budget is exhausted
+- actions: pick unlabeled item and ask crowd to label it / pick crowd labeled item and ask expert to label
+- pool crowd response by majority voting
+- challenges adressed: predict response to item from crowd or expert / predict true label of unlabeled item / predict true label of item with only crowd label
+
+Approach:
+- Train prob classifier on crowd and expert labeled portions of dataset
+- crowd decisions assumed to be iid, conditional on true label
+- each crowd worker gives noisy version of true label accuracy depends on true label (WHY not also on instance?) | SAME as in first paper?
+- for binary labels bernoulli models
+- use classifier and crowd accuracy models to estimate loss of a given state
+- Assume expert infallibility (zero loss for expert labels)
+- decision makeing algo: selected action is a function of loss incurred by action scaled by labelling cost
+
+- item weighting to account vor biases (due to uncertainty sampling ?)
+-
+
+
+NOTES: uses decision theoretic approach to determin which item to label and if it should be labelled by expert or crowd. However decision making is only based
+on very simple model of crowd accuracy. (majority voting & classifier compares to expert labels) Doesnt take into account the diversity in crowd votes or 
+uncertainty measures. Much worse than others ?
+
+Experiments:
+- Biomedical citation screening
+- 4 systematic review datasets
+- TF-IDF features for citations; title, abtract, keywords
+- For each citation, gold label + 5 crowd labels
+- test algo with all feature vectors + small subset e.g. 100 crowd anotated instances
+- Measure loss as weighted sum of TP and FP: L = FP + R*FN; for example R=10 means it is as expensive to miss one relevant document as including 10 irrelevant
+- set cost ratio E=100
+- US-Crowd vs US-Exper vs US-Crowd+Expert vs Decision theory
+
+
+###############################################################################################################################################################
+(6) Multi-class Multi-annotator Active Learning with Robust Gaussian Process for Visual Recognition (2015)
+
+- multi annotator & multi class
+- gaussian process
+- for visual recognition
+- generalize expectation maximization algorithm to estimate params for instances and quality of each annotator
+- Incorporate reinforcement learning to select most informative samples and best annotators
+- assume generalizing binary strategies to multi class AL is unsufficient
+
+- bayesian multi-class classification model that EXPLICITLY models expertise level of annotators
+- Expectation propagation for efficient approximate Bayesian inference of prob model for classification
+- Based on EP derive generalized expectatioon maximization to estimate params for instances and expertise
+
+- In CONTRAST to (3) approach aims to deal directly with multi-class cases
+
+- Prob. model: Gaussian process, with kernel tricks... flipping noise model... prior as multivariate bernoulli
+- learning with expectation maximization
+
+RL for Active Selection:
+- exploitation criteria: entropy and margin
+- exploration criteria: graph density
+- Criteria for annotator selection: label rate (prob that annotator labels correct) & label correct likelihood to identify annotator thats most likely to label correctly
+- Define states as tuples of (1) mixture of criteria for exploration exploitation and anotator selection (2) trade of among criteria; rewards & transition weights
+- Use Q-Learning to solve Markov decision process
+
+NOTES:
+- WHY is visual any different from other data types ?
+
+Experiments
+- 3 different image collections: 
+	- E-Album; 108 photos of 15 people in 145 detected faces; labeled by 7 annotators
+
+	- G-Album; 312 photos; 13 people; 441 detected phases; labeled by 7 annotators
+
+	- ImageNet; only use 3 classes of dogs; 3047,2426,2341 images; amazon turk -> 7 labels each.
+
+	♯classes ♯instances annotator quality
+	E-Album 15 145 84.83% - 95.17%
+	G-Album 13 441 75.06% - 98.41%
+	ImageNet 3 7814 91.89% - 92.68%
+	
+	- G-Album experiment:
+		- 60% for AL pool; 40% test
+		- Simulate cases for 2,3 or 4 irresponsible annotators (randomly assign label)
+		- For responsible annotators use labels from crowd sourcing
+	- E-Album & Imagenet experiment:
+		-
+		
+#################################################################################################
+5 annotators; 3 classes; 5*n_classes init; + 5*n_classes in every iteration; 15 budget; 
+big setting; 5*n_classes; utility function: margin

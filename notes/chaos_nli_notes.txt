@@ -1,0 +1,34 @@
+Chaos-NLI:
+
+What Can We Learn from Collective Human Opinions on Natural Language Inference Data? (2020)
+
+- contains anotations of human opinions (entailment (E), contradiction (C), neutrality(N))
+- goal is not to predict a ground truth label, as there is none, but to learn the uncertainty 
+by learning  the distributions
+- Important for uncertainty aware reasoning
+
+- Most models tested fail to capture distributions of human judgement;
+- Ability to predict distribution differs from performing well on accuracy metric
+- Performance well on subsets w/ high level agreement
+
+Dataset
+100 annotations / instance
+
+Models
+- BERT
+- XLNet
+- RoBERTa
+(...)
+
+- Evaluation using JSD distance between prediction distribution and real one
+
+- large gaps between model output and human opinions
+- Not even better than random output
+- No correlation between accuracy and divergent scores (JSD; KL)
+
+
+###############################################################################################
+Distributed NLI: Learning to Predict Human Opinion Distributions for Language Reasoning
+
+- Apply distribution estimation methods; Monte Carlo Dropout; Deep Ensemble; Re-Calibration; Distribution distilation
+- best results still far below upper-bound => predicting distribution of human judgement is still open, challenging problem with large room for improvement

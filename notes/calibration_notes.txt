@@ -1,0 +1,11 @@
+Calibration:
+
+- How to incentivize the model to improve calibration ?
+
+- Somehow adapt query strategy to combine uncertainty measure with calibration measure. (ECE,MCE,Brier score?)
+
+	- Not feasible to compute calibration measure on unlabeled data ? (Only compute on already labeled ? To chekc if add. labels ?)
+	
+	- Simulate labels and retrain to observe calibration change ? Expensive ?
+	
+	- Identify regions where calibration is bad e.g. specific bins ? Adapt query strategy to prioritize those regions ?
