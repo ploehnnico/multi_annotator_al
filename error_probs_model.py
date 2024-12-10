@@ -5,68 +5,8 @@ from sklearn.utils import check_array, check_consistent_length, check_random_sta
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 
-def rand_arg_max(arr, axis=1, random_state=None):
-    """
-    Returns index of maximum element per given axis. In case of ties, the index is chosen randomly.
+from mathematical_functions import rand_arg_max, compute_vote_vectors
 
-    Parameters
-    ----------
-    arr: array-like
-        Array whose maximum elements' indices are determined.
-    axis: int
-        Indices of maximum elements are determined along this axis.
-    random_state: numeric | np.random.RandomState
-        Random state for annotator selection.
-
-    Returns
-    -------
-    max_indices: array-like
-        Indices of maximum elements.
-    """
-    random_state = check_random_state(random_state)
-    arr = np.array(arr)
-    arr_max = arr.max(axis, keepdims=True)
-    tmp = random_state.uniform(low=1, high=2, size=arr.shape) * (arr == arr_max)
-    return tmp.argmax(axis)
-
-def compute_vote_vectors(y, c=None, n_unique_votes=None, probabilistic=False):
-
-    # check input class labels
-    y = check_array(y, ensure_2d=False, force_all_finite=False, copy=True)
-    y = y if y.ndim == 2 else y.reshape((-1, 1))
-    is_nan_y = np.isnan(y)
-    y[is_nan_y] = 0
-    y = y.astype(int)
-    n_unique_votes = np.size(np.unique(y), axis=0) if n_unique_votes is None else n_unique_votes
-
-    # check input confidence scores
-    c = np.ones_like(y) if c is None else check_array(c, ensure_2d=False, force_all_finite=False, copy=True)
-    c = c if c.ndim == 2 else c.reshape((-1, 1))
-    check_consistent_length(y, c)
-    check_consistent_length(y.T, c.T)
-    c[np.logical_and(np.isnan(c), ~is_nan_y)] = 1
-
-    if probabilistic:
-        # compute probabilistic votes per class
-        n_annotators = np.size(y, axis=1)
-        n_samples = np.size(y, axis=0)
-        sample_ids = np.arange(n_samples)
-        P = np.array([(1 - c) / (n_unique_votes - 1)] * n_unique_votes).reshape(n_annotators, n_samples, n_unique_votes)
-        for a in range(n_annotators):
-            P[a, sample_ids,  y[:, a]] = c[:, a]
-            P[a, is_nan_y[:, a]] = np.nan
-        V = np.nansum(P, axis=0)
-        #V_sum = V.sum(axis=1, keepdims=True)
-        #is_not_zero = (V_sum != 0).flatten()
-        #V[is_not_zero] /= V_sum[is_not_zero]
-    else:
-        # count class labels per class and weight by confidence scores
-        c[np.logical_or(np.isnan(c), is_nan_y)] = 0
-        y_off = y + np.arange(y.shape[0])[:, None] * n_unique_votes
-        V = np.bincount(y_off.ravel(), minlength=y.shape[0] * n_unique_votes, weights=c.ravel())
-        V = V.reshape(-1, n_unique_votes)
-
-    return V
 
 class ErrorProbsModel(BaseEstimator):
     """ErrorProbsModel
@@ -110,14 +50,14 @@ class ErrorProbsModel(BaseEstimator):
     """
 
     def __init__(self, n_classes, random_state=None, **kwargs):
-        self.n_classes_ = int(n_classes)
-        if self.n_classes_ <= 1:
+        self.n_classes = int(n_classes)
+        if self.n_classes <= 1:
             raise ValueError("'n_classes' must be an integer greater than one")
 
-        self.random_state_ = check_random_state(random_state)
+        self.random_state = check_random_state(random_state)
 
-        self.kwargs_ = kwargs
-        self.lr_list_ = None
+        self.kwargs = kwargs
+        self.lr_list = None
 
     def fit(self, X, y, c=None):
         """
@@ -147,18 +87,18 @@ class ErrorProbsModel(BaseEstimator):
         is_labeled = ~np.isnan(y)
 
         # compute (confidence weighted majority) vote
-        V = compute_vote_vectors(y=y, c=c, n_unique_votes=self.n_classes_)
-        y_mv = rand_arg_max(arr=V, axis=1, random_state=self.random_state_)
+        V = compute_vote_vectors(y=y, c=c, n_unique_votes=self.n_classes)
+        y_mv = rand_arg_max(arr=V, axis=1, random_state=self.random_state)
 
         # fit PWC per annotator
-        self.lr_list_ = []
+        self.lr_list = []
         for a_idx in range(n_annotators):
             is_correct = np.array(np.equal(y_mv[is_labeled[:, a_idx]], y[is_labeled[:, a_idx], a_idx]), dtype=int)
             if len(np.unique(is_correct)) >= 2:
-                lr = LogisticRegression(**self.kwargs_)
-                self.lr_list_.append(lr.fit(X[is_labeled[:, a_idx]], is_correct))
+                lr = LogisticRegression(**self.kwargs)
+                self.lr_list.append(lr.fit(X[is_labeled[:, a_idx]], is_correct))
             else:
-                self.lr_list_.append(np.mean(is_correct))
+                self.lr_list.append(np.mean(is_correct))
 
         return self
 
@@ -177,15 +117,15 @@ class ErrorProbsModel(BaseEstimator):
         Y: matrix-like, shape (n_samples, n_annotators)
             Estimate label accuracy for each sample-annotator-pair.
         """
-        if self.lr_list_ is None:
+        if self.lr_list is None:
             raise NotFittedError("This ErrorProbsModel instance is not fitted yet. Call 'fit' with appropriate "
                                  "arguments before using this estimator.")
-        n_annotators = len(self.lr_list_)
+        n_annotators = len(self.lr_list)
         n_samples = len(X)
         Y = np.empty((n_samples, n_annotators))
         for a in range(n_annotators):
-            if isinstance(self.lr_list_[a], LogisticRegression):
-                Y[:, a] = self.lr_list_[a].predict_proba(X)[:, 0]
+            if isinstance(self.lr_list[a], LogisticRegression):
+                Y[:, a] = self.lr_list[a].predict_proba(X)[:, 0]
             else:
-                Y[:, a] = self.lr_list_[a]
+                Y[:, a] = self.lr_list[a]
         return Y
