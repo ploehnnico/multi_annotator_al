@@ -58,8 +58,7 @@ class QueryStrategy(ABC):
 class MarginQS(QueryStrategy):
 
 	def compute_scores(self, **kwargs):
-		classifier = kwargs.get('classifier')
-		p = classifier.predict_proba(self.data_set.X_train)
+		p = kwargs.get('probabilities')
 		score = np.diff(np.sort(p, axis=1))[:,-1]
 
 		return score
