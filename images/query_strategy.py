@@ -39,9 +39,9 @@ class QueryStrategy(ABC):
 
 		self.data_set.update_entries(instances_idx, annotators)
 
-	def make_query(self, kwargs):
+	def make_query(self, **kwargs):
 		
-		scores = self.compute_scores(kwargs)
+		scores = self.compute_scores(**kwargs)
 		
 
 		if not self.relabel:
