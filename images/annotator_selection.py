@@ -31,7 +31,7 @@ def select_epm_annotator(instances, **kwargs):
 	X_train = dataset.X_train
 
 	y_DL = dataset.y_DL
-	epm = ErrorProbsModel(kwargs['n_classes'])
+	epm = ErrorProbsModel(len(np.unique(dataset.y_train)))
 	epm.fit(X_train, y_DL)
 	label_accuracy = epm.predict(X_train[selected_idx])
 
