@@ -36,6 +36,22 @@ class ALDataset:
 
 		return fully_annotated
 
+	def get_n_annotations(self):
+		n_annotations = np.sum(self.get_annotated())
+
+		return n_annotations
+
+	def get_annotations_per_instance(self):
+
+		n_annotated = self.get_n_annotations()
+		api = np.sum(~np.isnan(self.y_DL)) / n_annotated
+
+		return api
+
+
+	def get_max_annotations(self):
+		max_annot = np.max(np.sum(~np.isnan(self.y_DL), axis=1))
+		return max_annot
 
 	def update_entries(self, idx, annotators):
 
