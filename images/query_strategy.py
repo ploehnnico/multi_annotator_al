@@ -50,7 +50,9 @@ class QueryStrategy(ABC):
 			scores[self.data_set.get_fully_annotated()] = np.inf
 		
 		instances_idx = np.argsort(scores)[:self.budget]
-		annotators = self.select_annotators()
+		annotators = self.select_annotators(instances_idx)
+
+		self.data_set.update_entries(instances_idx, annotators)
 
 
 class MarginQS(QueryStrategy):
