@@ -32,7 +32,7 @@ class ALDataset:
 	def get_fully_annotated(self):
 
 		n_annotators = self.y_DL.shape[1]
-		fully_annotated = np.sum(~np.isnan(n_annotators), axis=1) == n_annotators
+		fully_annotated = np.sum(~np.isnan(self.y_DL), axis=1) == n_annotators
 
 		return fully_annotated
 
