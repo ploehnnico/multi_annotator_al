@@ -45,9 +45,9 @@ class QueryStrategy(ABC):
 		
 
 		if not self.relabel:
-			scores[self.data_set.get_annoteted()] = np.inf
+			scores[self.data_set.get_annotated()] = np.inf
 		else:
-			scores[self.data_set.get_fully_annoteted()] = np.inf
+			scores[self.data_set.get_fully_annotated()] = np.inf
 		
 		instances_idx = np.argsort(scores)[:self.budget]
 		annotators = self.select_annotators()
