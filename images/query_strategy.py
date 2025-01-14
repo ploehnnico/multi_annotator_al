@@ -32,8 +32,8 @@ class QueryStrategy(ABC):
 
 		y_train = self.data_set.y_train
 
-		instances_idx = [i for l in [rng.choice(np.where(y_train==c)[0], self.budget, 
-						 replace=False) for c in np.unique(y_train)] for i in l]
+		instances_idx = np.array([i for l in [rng.choice(np.where(y_train==c)[0], self.budget, 
+						 replace=False) for c in np.unique(y_train)] for i in l])
 		
 		annotators = self.select_annotators(instances_idx)
 
